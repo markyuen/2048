@@ -1,0 +1,25 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    secretEnv: ['NEXT_PUBLIC_BACKEND_URL']
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker build -t gcr.io/${_PROJECT_ID}/frontend:${_SHORT_SHA} --build-arg NEXT_PUBLIC_BACKEND_URL=$$NEXT_PUBLIC_BACKEND_URL --build-arg PORT=${_PORT} .
+  - name: gcr.io/cloud-builders/docker
+    args: ['push', 'gcr.io/${_PROJECT_ID}/frontend:${_SHORT_SHA}']
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args: [
+      'gcloud', 'run', 'deploy', '${_PROJECT_ID}-frontend',
+      '--image', 'gcr.io/${_PROJECT_ID}/frontend:${_SHORT_SHA}',
+      '--region', 'asia-east1',
+      '--allow-unauthenticated',
+      '--no-cpu-boost',
+      '--max-instances', '1',
+    ]
+images:
+  - gcr.io/${_PROJECT_ID}/frontend:${_SHORT_SHA}
+availableSecrets:
+  secretManager:
+    - env: NEXT_PUBLIC_BACKEND_URL
+      versionName: projects/${_PROJECT_ID}/secrets/NEXT_PUBLIC_BACKEND_URL/versions/latest

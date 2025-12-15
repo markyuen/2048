@@ -13,3 +13,10 @@ pyenv exec python -m uvicorn api:app --reload
 ```
 
 (Probably better to setup in a virtual environment)
+
+Container:
+
+```bash
+podman build .
+podman run -d --env-file ./.env --build-arg PORT=8000 -p 8000:8000 <image>
+```

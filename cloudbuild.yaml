@@ -1,0 +1,25 @@
+steps:
+  - name: python:3.14.2-alpine
+    entrypoint: python
+    args: ['-m', 'pip', 'install', '-r', 'backend/requirements.txt', '--user']
+  - name: python:3.14.2-alpine
+    entrypoint: python
+    args: ['-m', 'pytest', 'backend']
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        for d in */; do
+          config="${d}cloudbuild.yaml"
+          if [[ ! -f "$config" ]]; then
+            continue
+          fi
+          echo "Building $d ... "
+          (
+            gcloud builds submit $d --config=$config --substitutions=_PROJECT_ID=$PROJECT_ID,_SHORT_SHA=$SHORT_SHA,_PORT=$$PORT
+          ) &
+        done
+        wait
+options:
+  logging: CLOUD_LOGGING_ONLY
